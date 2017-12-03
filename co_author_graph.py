@@ -4,6 +4,7 @@
 import json
 import networkx as nx
 import time
+import pickle
  
 with open("tmp_dblp_coauthorship.json") as f:
     d = json.load(f)
@@ -30,11 +31,11 @@ test = nx.Graph()
 train.add_edges_from(training)
 test.add_edges_from(testing)
 
-print nx.info(train)
-print nx.info(test)
+pickle.dump(train, open("graphs/train.p", "wb"), protocol = 0)
+pickle.dump(test, open("graphs/test.p", "wb"), protocol = 0)
 
-start = time.time()
-path = dict(nx.all_pairs_shortest_path(train))
-print time.time() - start
+
+
+
 
 #
