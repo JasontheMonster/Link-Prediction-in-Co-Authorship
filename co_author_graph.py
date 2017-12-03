@@ -18,10 +18,10 @@ testing = []
 for author1, author2, year in d:
   #training
   if year >= 1990 and year <2000:
-    training.append((author1, author2))
+    training.append((author1.encode('utf-8'), author2.encode('utf-8')))
   #testing set
   elif year >= 2000 and year <= 2004:
-    testing.append((author1, author2))
+    testing.append((author1.encode('utf-8'), author2.encode('utf-8')))
 
 #create two networkx graph and add edge with list training and test
 
