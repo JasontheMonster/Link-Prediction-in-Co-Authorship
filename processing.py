@@ -6,8 +6,7 @@ import json
 from unidecode import unidecode
 import pickle
 import requests
-import os
-from collections import defaultdict
+import itertools
 
 write = True
 read = True
@@ -38,18 +37,19 @@ def generate_authors(read, write):
 
 
 def get_json():
-    url_list = build_url()
+    url = "https://westus.api.cognitive.microsoft.com/academic/v1.0/evaluate?expr=" \
+          "Composite(F.FN=='fluid dynamics')&model=latest&count=10000&offset=0&attributes=Y,Ti,Id,F.FN,AA.AuN,W"
     headers = {
-        # "Host": "westus.api.cognitive.microsoft.com",
-        "Ocp-Apim-Subscription-Key": "e728f81ce2c443e6b17d3da63b469b22"
+        "Ocp-Apim-Subscription-Key": ""  # add own key
     }
-    path = "./mag_raw/"
-    for i, url in enumerate(url_list):
-        r = requests.get(url, headers=headers)
-        data = r.json()
-        file_name = path + str(i) + "_author_attributes.json"
-        with open(file_name, 'w') as f:
-            json.dump(data, f)
+    path = "./database/"
+    # for i, url in enumerate(url_list):
+    r = requests.get(url, headers=headers)
+    data = r.json()
+    # file_name = path + str(i) + "_author_attributes.json"
+    file_name = "fluid_dynamics.json"
+    with open(path+file_name, 'w') as f:
+        json.dump(data, f)
 
 
 def build_url():
@@ -69,35 +69,22 @@ def build_url():
     return url_list
 
 
-def build_tables():
-    path = "./mag_raw/"
-    json_files = [path + pos_json for pos_json in os.listdir(path)]
-    db = defaultdict(lambda: defaultdict(list))
-    for fl in json_files:
-        with open(fl, 'r') as f:
-            try:
-                data = json.load(f)['entities']
-            except KeyError:
-                pass
-            else:
-                for entry in data:
-                    keywords = entry['W']
-                    title = entry["Ti"]
-                    try:
-                        fields = [f["FN"] for f in entry["F"]]
-                        authors = [a["AuN"] for a in entry["AA"]]
-                    except KeyError:
-                        pass
-                    else:
-                        for a in authors:
-                            db[a]["fields"].extend(fields)
-                            db[a]["keywords"].extend(keywords)
-                            db[a]["papers"].append(title)
-                            fields = list(set(db[a]["fields"]))
-                            kw = list(set(db[a]["keywords"]))
-                            db[a]["fields"] = fields
-                            db[a]["keywords"] = kw
-    with open('attributes.p', 'w') as fp:
-        json.dump(db, fp)
+def create_edge_list():
+    with open('./database/fluid_dynamics.json', 'rb') as fp:
+        db = json.load(fp)['entities']
+        edge_list = set()
+        authors = set()
+        for paper in db:
+            author_list = [a["AuN"] for a in paper["AA"]]
+            edges = list(itertools.combinations(author_list, 2))
+            year = [paper['Y']]*len(edges)
+            edge_year = list(zip(edges, year))
+            authors.update(author_list)
+            edge_list.update(edge_year)
+    with open("database/edges.p", 'wb') as f:
+        pickle.dump(edge_list, f)
+    with open("database/authors.p", 'wb') as f:
+        pickle.dump(authors, f)
 
-build_tables()
+
+
