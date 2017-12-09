@@ -3,6 +3,8 @@ import pickle
 from graph import Graph
 import json
 import networkx as nx
+import numpy as np
+from sklearn import preprocessing
 class Metrics(object):
 
 	def __init__(self, train, test, path_feature = False):
@@ -86,14 +88,25 @@ if __name__ == "__main__":
 
 
 				if index <= len(dataGraph.train.nodes)**2.0 - 2*len(dataGraph.train.edges):
-					data.append([path_score, neighbor_score, key_score, field_score, kSum, nSum])
+					data.append([path_score, key_score, field_score, neighbor_score, kSum, nSum])
 					labels.append(int((node1, node2) in dataGraph.test.edges))
 				else:
-					test_data.append([path_score, neighbor_score, key_score, field_score, kSum, nSum])
+					test_data.append([path_score, key_score, field_score, neighbor_score, kSum, nSum])
 					test_labels.append(int((node1, node2) in dataGraph.test.edges))
 			index +=1
 
-	pickle.dump( data, open("data_matrix.p", "wb"))
+	X_train = np.array(data)
+	X_reduce_train = X_train[:, [0, 1, 2]]
+	X_scaled_train = preprocessing.scale(X_reduce_train)
+
+	X_test = np.array(test_data)
+	X_reduce_test = X_test[:, [0, 1, 2]]
+	X_scaled_test = preprocessing.scale(X_reduce_test)
+
+
+	pickle.dump( X_train, open("X_train.p", "wb"))
+	pickle.dump( X_scaled_train, open("X_scaled_train.p", "wb"))
+	pickle.dump( X_test, open("X_test.p", "wb"))
+	pickle.dump( X_scaled_test, open("X_scaled_test.p", "wb"))
 	pickle.dump( labels, open("labels.p", "wb"))
-	pickle.dump( test_data, open("test_data.p", "wb"))
 	pickle.dump( test_labels, open("test_labels.p", "wb"))
